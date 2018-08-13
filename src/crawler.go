@@ -816,3 +816,117 @@ func (c *Crawler) printStats() {
 		humanize.Comma(int64(c.numTrash)),
 		humanize.Comma(int64(c.errors)))
 }
+
+// func (url *Url) InsertUrl(client *elastic.Client) {
+//     res, err := client.Index().
+//     	Index("url").
+//     	Type("doc").
+//     	BodyJson(url).
+//     	Refresh("wait_for").
+//     	Do(context.Background())
+//     if err != nil {
+//     	panic(err)
+//     }
+//     if len(res.Id) > 0 {
+//         url.ID = res.Id
+//     }
+// }
+// 
+// func (url *Url) InsertImage(client *elastic.Client) {
+//     res, err := client.Index().
+//     	Index("image").
+//     	Type("doc").
+//     	BodyJson(url).
+//     	Refresh("wait_for").
+//     	Do(context.Background())
+//     if err != nil {
+//     	panic(err)
+//     }
+//     if len(res.Id) > 0 {
+//         url.ID = res.Id
+//     }
+// }
+// 
+// func (url *Url) UpdateUrl(client *elastic.Client) {
+//     urlID := url.ID
+//     url.ID = ""
+//     _, err := client.Update().
+//         Index("url").
+//         Type("doc").
+//         Id(urlID).
+//         Doc(url).
+//         Do(context.Background())
+//     if err != nil {
+//         panic(err)
+//     }
+// }
+// 
+// func (url *Url) UpdateImage(client *elastic.Client) {
+//     urlID := url.ID
+//     url.ID = ""
+//     _, err := client.Update().
+//         Index("image").
+//         Type("doc").
+//         Id(urlID).
+//         Doc(url).
+//         Do(context.Background())
+//     if err != nil {
+//         panic(err)
+//     }
+// }
+// 
+// func (url *Url) GetImageByName(client *elastic.Client) {
+//     termQuery := elastic.NewMatchQuery("url", url.Url)
+//     searchResult, err := client.Search().
+//     	Index("image").                  
+//     	Query(termQuery).              
+//     	Do(context.Background())       
+//     if err != nil {
+//     	fmt.Println(err)
+//     }
+// 
+//     for _, hit := range searchResult.Hits.Hits {
+//         url.ID = hit.Id
+//         err := json.Unmarshal(*hit.Source, &url)
+//         if err != nil {
+//             fmt.Println(err)
+//         }
+//     }
+// }
+// 
+// func (url *Url) GetUrlByName(client *elastic.Client) {
+//     termQuery := elastic.NewMatchQuery("url", url.Url)
+//     searchResult, err := client.Search().
+//     	Index("url").                  
+//     	Query(termQuery).              
+//     	Do(context.Background())       
+//     if err != nil {
+//     	fmt.Println(err)
+//     }
+// 
+//     for _, hit := range searchResult.Hits.Hits {
+//         url.ID = hit.Id
+//         err := json.Unmarshal(*hit.Source, &url)
+//         if err != nil {
+//             fmt.Println(err)
+//         }
+//     }
+// }
+// 
+// func (url *Url) RegexMatch() string {
+//     re := regexp.MustCompile(`(\.png)|(\.svg)|(\.tif)|(\.jpg)|(\.gif)|(\.jpeg)|(\.pdf)|(\.jp)|(\.j2)|(\.fpx)|(\.pcd)|(\.webp)|(\.ai)|(\.eps)`)
+// 	switch res := re.FindString(url.Url); res {
+//     case ".jpg":
+// 		return "jpg"
+// 	case ".svg":
+// 		return "svg"
+// 	case ".png":
+// 		return "png"
+//     case ".pdf":
+//         return "pdf"
+//     case ".gif":
+//         return "gif"   
+// 	default:
+// 		return "img"		
+// 	}
+// }
