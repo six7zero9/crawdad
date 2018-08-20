@@ -25,7 +25,7 @@ import (
 	"github.com/goware/urlx"
 	"github.com/jcelliott/lumber"
 	"github.com/pkg/errors"
-	"github.com/schollz/collectlinks"
+	"github.com/six7zero9/collectlinks"
 )
 
 // Settings is the configuration across all instances

@@ -1,0 +1,9 @@
+[[pluck]]
+name = "title"
+activators = ["<title>"]
+deactivator = "</title>"
+
+[[pluck]]
+name = "name"
+activators = ['<img src="']
+deactivator = '"'
