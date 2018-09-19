@@ -22,10 +22,12 @@ import (
 	log "github.com/cihub/seelog"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/go-redis/redis"
-	"github.com/goware/urlx"
+	"github.com/six7zero9/urlx"
 	"github.com/jcelliott/lumber"
 	"github.com/pkg/errors"
 	"github.com/six7zero9/collectlinks"
+    "github.com/olivere/elastic"
+    "github.com/sfmetrics/es-model"
 )
 
 // Settings is the configuration across all instances
@@ -204,7 +206,7 @@ func (c *Crawler) Init(config ...Settings) (err error) {
 		}
 	}
 	if len(c.Settings.BaseURL) > 0 {
-		log.Infof("Adding %s to URLs", c.Settings.BaseURL)
+		log.Infof("Adding %v to URLs", c.Settings.BaseURL)
 		err = c.addLinkToDo(c.Settings.BaseURL, true)
 		if err != nil {
 			return err
@@ -573,14 +575,14 @@ func (c *Crawler) scrapeLinks(url string) (linkCandidates []string, pluckedData 
 		if !foundIncludedKeyword && len(c.Settings.KeywordsToInclude) > 0 {
 			continue
 		}
-
+        
 		// If it passed all the tests, add to link candidates
 		linkCandidates[linkCandidatesI] = normalizedLink
 		linkCandidatesI++
 	}
 	// trim candidate list
 	linkCandidates = linkCandidates[0:linkCandidatesI]
-
+    
 	return
 }
 
@@ -604,7 +606,19 @@ func (c *Crawler) crawl(id int, jobs chan string) {
 			}
 			continue
 		}
+        
+        // Creat ES client 
+        client, err := elastic.NewClient(elastic.SetBasicAuth("elastic", "elastic"))
+        if err != nil {
+            log.Warn(err)
+        }
+        
+        var url model.URL
+        url.URL = randomURL
+        url.LinkTo = urls
 
+        url.Insert(client)
+        
 		t := time.Now()
 
 		// move url to 'done'
@@ -627,10 +641,11 @@ func (c *Crawler) crawl(id int, jobs chan string) {
 				continue
 			}
 		}
+        
 		log.Debugf("worker #%d: %d urls and %d bytes from %s [%s]", id, len(urls), len(pluckedData), randomURL, time.Since(t).String())
 		c.numberOfURLSParsed++
 	}
-	log.Infof("%d exiting", id)
+	// log.Infof("%d exiting", id)
 }
 
 func (c *Crawler) AddSeeds(seeds []string, force ...bool) (err error) {
@@ -649,6 +664,7 @@ func (c *Crawler) AddSeeds(seeds []string, force ...bool) (err error) {
 		if len(seeds) > 100 {
 			bar.Increment()
 		}
+        
 		err = c.addLinkToDo(seed, toForce)
 		if err != nil {
 			return
@@ -669,8 +685,9 @@ func (c *Crawler) Crawl() (err error) {
 	c.programTime = time.Now()
 	c.numberOfURLSParsed = 0
 	c.isRunning = true
+    
 	go c.contantlyPrintStats()
-
+    
 	var jobs chan string = make(chan string)
 	for w := 0; w < c.MaxNumberWorkers; w++ {
 		go c.crawl(w, jobs)
@@ -817,21 +834,6 @@ func (c *Crawler) printStats() {
 		humanize.Comma(int64(c.errors)))
 }
 
-// func (url *Url) InsertUrl(client *elastic.Client) {
-//     res, err := client.Index().
-//     	Index("url").
-//     	Type("doc").
-//     	BodyJson(url).
-//     	Refresh("wait_for").
-//     	Do(context.Background())
-//     if err != nil {
-//     	panic(err)
-//     }
-//     if len(res.Id) > 0 {
-//         url.ID = res.Id
-//     }
-// }
-// 
 // func (url *Url) InsertImage(client *elastic.Client) {
 //     res, err := client.Index().
 //     	Index("image").
@@ -844,20 +846,6 @@ func (c *Crawler) printStats() {
 //     }
 //     if len(res.Id) > 0 {
 //         url.ID = res.Id
-//     }
-// }
-// 
-// func (url *Url) UpdateUrl(client *elastic.Client) {
-//     urlID := url.ID
-//     url.ID = ""
-//     _, err := client.Update().
-//         Index("url").
-//         Type("doc").
-//         Id(urlID).
-//         Doc(url).
-//         Do(context.Background())
-//     if err != nil {
-//         panic(err)
 //     }
 // }
 // 
@@ -894,25 +882,7 @@ func (c *Crawler) printStats() {
 //     }
 // }
 // 
-// func (url *Url) GetUrlByName(client *elastic.Client) {
-//     termQuery := elastic.NewMatchQuery("url", url.Url)
-//     searchResult, err := client.Search().
-//     	Index("url").                  
-//     	Query(termQuery).              
-//     	Do(context.Background())       
-//     if err != nil {
-//     	fmt.Println(err)
-//     }
-// 
-//     for _, hit := range searchResult.Hits.Hits {
-//         url.ID = hit.Id
-//         err := json.Unmarshal(*hit.Source, &url)
-//         if err != nil {
-//             fmt.Println(err)
-//         }
-//     }
-// }
-// 
+
 // func (url *Url) RegexMatch() string {
 //     re := regexp.MustCompile(`(\.png)|(\.svg)|(\.tif)|(\.jpg)|(\.gif)|(\.jpeg)|(\.pdf)|(\.jp)|(\.j2)|(\.fpx)|(\.pcd)|(\.webp)|(\.ai)|(\.eps)`)
 // 	switch res := re.FindString(url.Url); res {

@@ -8,9 +8,11 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	crawdad "github.com/schollz/crawdad/src"
+    // "reflect"
+    
+	crawdad "github.com/six7zero9/crawdad/src"
 	"github.com/urfave/cli"
+    "github.com/six7zero9/urlx"
 )
 
 var version string
@@ -152,7 +154,7 @@ func main() {
   {/               { }        \   
              ||||  \ \______   \  
              // \\   \    _^_\ |  
-                      \______/   
+                      \______/
                        
 	crawdad version ` + app.Version + "\n\n")
 		// Setup crawler to crawl
@@ -175,6 +177,11 @@ func main() {
 		var options crawdad.Settings
 		if c.GlobalBool("set") {
 			options.BaseURL = c.GlobalString("url")
+            
+            // Normalizing BaseURL
+            URLString, _ := urlx.Parse(options.BaseURL)
+            options.BaseURL, _ = urlx.Normalize(URLString)
+            
 			options.AllowQueryParameters = c.GlobalBool("query")
 			options.AllowHashParameters = c.GlobalBool("hash")
 			options.DontFollowLinks = c.GlobalBool("no-follow")
@@ -248,7 +255,7 @@ func main() {
 		}
 		return err
 	}
-
+    
 	err := app.Run(os.Args)
 	if err != nil {
 		fmt.Print(err)
